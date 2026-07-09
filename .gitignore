@@ -21,6 +21,12 @@ target/
 .settings
 .springBeans
 .sts4-cache
+.metadata/
+
+### Misc ###
+GenerateHash.java
+TestYaml.java
+TestYaml.class
 
 ### NetBeans ###
 /nbproject/private/
