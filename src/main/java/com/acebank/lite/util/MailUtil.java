@@ -1,18 +1,20 @@
 package com.acebank.lite.util;
 
-import jakarta.mail.*;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
 import lombok.extern.java.Log;
-
-import java.util.Properties;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 
 @Log
 public class MailUtil {
 
+    // Default sender address
+    private static final String DEFAULT_SENDER = "support@acebank.com";
+
     public static void sendMailAsync(String recipient, String subject, String body) {
-        log.info("Scheduling background email to: " + recipient);
+        log.info("Scheduling background email (via Brevo HTTP API) to: " + recipient);
         CompletableFuture.runAsync(() -> {
             try {
                 sendMail(recipient, subject, body);
@@ -24,89 +26,71 @@ public class MailUtil {
     }
 
     public static boolean sendMail(final String recipient, String subject, String body) {
-        log.info("Attempting to send email to: " + recipient);
+        log.info("Attempting to send email via Brevo HTTP API to: " + recipient);
 
-        String mailAddr = ConfigLoader.getProperty(ConfigKeys.MAIL_ADDR);
-        String mailPwd = ConfigLoader.getProperty(ConfigKeys.MAIL_PWD);
+        // Fetch Brevo API Key from ConfigLoader
+        String apiKey = ConfigLoader.getProperty("BREVO_API_KEY");
+        String senderEmail = ConfigLoader.getProperty(ConfigKeys.MAIL_ADDR);
 
-        if (mailAddr == null || mailPwd == null || mailAddr.isEmpty() || mailPwd.isEmpty()) {
-            log.severe("Email credentials are not configured! MAIL_ADDR: " + mailAddr + ", PWD provided: "
-                    + (mailPwd != null && !mailPwd.isEmpty()));
-            return false;
+        if (apiKey == null || apiKey.isEmpty()) {
+            // Fallback hardcoded decoded key if env variable not present yet
+            apiKey = "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";
+        }
+        if (senderEmail == null || senderEmail.isEmpty()) {
+            senderEmail = DEFAULT_SENDER;
         }
 
         try {
-            Properties props = getSmtpConfig();
-            log.info("SMTP Config: " + props.toString());
+            URL url = new URL("https://api.brevo.com/v3/smtp/email");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("accept", "application/json");
+            conn.setRequestProperty("api-key", apiKey);
+            conn.setRequestProperty("content-type", "application/json");
+            conn.setDoOutput(true);
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
 
-            Session session = Session.getInstance(props, new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(mailAddr, mailPwd);
+            // Escape quotes and newlines in body
+            String escapedBody = body.replace("\\", "\\\\")
+                                     .replace("\"", "\\\"")
+                                     .replace("\n", "\\n")
+                                     .replace("\r", "");
+
+            // Construct JSON request body
+            String jsonPayload = String.format(
+                "{" +
+                "  \"sender\": {\"name\": \"AceBank Support\", \"email\": \"%s\"}," +
+                "  \"to\": [{\"email\": \"%s\"}]," +
+                "  \"subject\": \"%s\"," +
+                "  \"textContent\": \"%s\"" +
+                "}",
+                senderEmail, recipient, subject, escapedBody
+            );
+
+            try (OutputStream os = conn.getOutputStream()) {
+                byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
+            int responseCode = conn.getResponseCode();
+            if (responseCode >= 200 && responseCode < 300) {
+                log.info("Email sent successfully via Brevo HTTP API to " + recipient);
+                return true;
+            } else {
+                log.severe("Failed to send email via Brevo. HTTP Response Code: " + responseCode);
+                // Read error stream if any
+                try (java.util.Scanner s = new java.util.Scanner(conn.getErrorStream(), StandardCharsets.UTF_8).useDelimiter("\\A")) {
+                    String errorResponse = s.hasNext() ? s.next() : "";
+                    log.severe("Error Response: " + errorResponse);
                 }
-            });
-
-            // Enable debugging if needed
-// session.setDebug(true);
-
-            Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(mailAddr, "AceBank Support"));
-            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient));
-            message.setSubject(subject);
-            message.setText(body);
-
-            log.info("Handing off to Transport.send...");
-            Transport.send(message);
-            log.info("Email sent successfully to " + recipient);
-            return true;
+                return false;
+            }
 
         } catch (Exception e) {
-            log.severe("Failed to send email to " + recipient + ". Error: " + e.getMessage());
+            log.severe("Failed to send email to " + recipient + " via Brevo API. Error: " + e.getMessage());
             e.printStackTrace();
             return false;
-        }
-    }
-
-    private static Properties getSmtpConfig() {
-        Properties props = new Properties();
-
-        // Safely load each SMTP property with null-safe fallback defaults.
-        // Use port 465 with SSL/TLS as port 587 (STARTTLS) is often blocked by cloud providers like Render.
-        putSafe(props, "mail.smtp.host",
-                ConfigLoader.getProperty(ConfigKeys.MAIL_SMTP_HOST), "smtp.gmail.com");
-        putSafe(props, "mail.smtp.port",
-                ConfigLoader.getProperty(ConfigKeys.MAIL_SMTP_PORT), "465");
-        putSafe(props, "mail.smtp.auth",
-                ConfigLoader.getProperty(ConfigKeys.MAIL_SMTP_AUTH), "true");
-        
-        // Use SSL/TLS socket factory configuration for port 465
-        props.put("mail.smtp.ssl.enable", "true");
-        props.put("mail.smtp.socketFactory.port", "465");
-        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-        props.put("mail.smtp.socketFactory.fallback", "false");
-
-        putSafe(props, "mail.smtp.connectiontimeout",
-                ConfigLoader.getProperty(ConfigKeys.MAIL_SMTP_CONN_TIMEOUT), "10000");
-        putSafe(props, "mail.smtp.timeout",
-                ConfigLoader.getProperty(ConfigKeys.MAIL_SMTP_TIMEOUT), "10000");
-
-        // SSL trust — critical for Docker/cloud environments where the JVM
-        // may not have smtp.gmail.com's CA certificate pre-trusted.
-        props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
-
-        return props;
-    }
-
-    /**
-     * Null-safe property setter. Uses fallback if value is null or blank.
-     * Prevents the NullPointerException that Properties.put() throws on null values.
-     */
-    private static void putSafe(Properties props, String key, String value, String fallback) {
-        if (value != null && !value.isBlank()) {
-            props.put(key, value);
-        } else {
-            props.put(key, fallback);
-            log.warning("SMTP config '" + key + "' was null/blank — using fallback: " + fallback);
         }
     }
 }
