@@ -69,7 +69,7 @@
                                         </a>
                                     </div>
                                     <div class="avatar-dropdown-footer">
-                                        <a href="<%= request.getContextPath() %>/Logout" class="signout-all-btn">
+                                        <a href="<%= request.getContextPath() %>/logout" class="signout-all-btn">
                                             <i data-lucide="log-out" style="width: 16px;"></i>
                                             Sign out of all accounts
                                         </a>

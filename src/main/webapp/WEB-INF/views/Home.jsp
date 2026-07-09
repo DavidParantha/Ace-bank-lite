@@ -78,7 +78,7 @@
                                     </a>
                                 </div>
                                 <div class="avatar-dropdown-footer">
-                                    <a href="<%= request.getContextPath() %>/Logout" class="signout-all-btn">
+                                    <a href="<%= request.getContextPath() %>/logout" class="signout-all-btn">
                                         <i data-lucide="log-out" style="width: 16px;"></i>
                                         Sign out of all accounts
                                     </a>
@@ -369,7 +369,7 @@
                     (function () {
                         const IDLE_LIMIT = 5 * 60 * 1000;   // 5 minutes
                         const WARNING_AT = 60 * 1000;        // Show warning at 1 min remaining
-                        const LOGOUT_URL = '<%= request.getContextPath() %>/Logout';
+                        const LOGOUT_URL = '<%= request.getContextPath() %>/logout';
 
                         let idleTimer = null;
                         let warningTimer = null;

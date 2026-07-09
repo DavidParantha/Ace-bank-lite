@@ -71,16 +71,20 @@ public class MailUtil {
         Properties props = new Properties();
 
         // Safely load each SMTP property with null-safe fallback defaults.
-        // Previously, passing a null value to props.put() caused a NullPointerException
-        // which silently killed the entire email system.
+        // Use port 465 with SSL/TLS as port 587 (STARTTLS) is often blocked by cloud providers like Render.
         putSafe(props, "mail.smtp.host",
                 ConfigLoader.getProperty(ConfigKeys.MAIL_SMTP_HOST), "smtp.gmail.com");
         putSafe(props, "mail.smtp.port",
-                ConfigLoader.getProperty(ConfigKeys.MAIL_SMTP_PORT), "587");
+                ConfigLoader.getProperty(ConfigKeys.MAIL_SMTP_PORT), "465");
         putSafe(props, "mail.smtp.auth",
                 ConfigLoader.getProperty(ConfigKeys.MAIL_SMTP_AUTH), "true");
-        putSafe(props, "mail.smtp.starttls.enable",
-                ConfigLoader.getProperty(ConfigKeys.MAIL_SMTP_STARTTLS), "true");
+        
+        // Use SSL/TLS socket factory configuration for port 465
+        props.put("mail.smtp.ssl.enable", "true");
+        props.put("mail.smtp.socketFactory.port", "465");
+        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+        props.put("mail.smtp.socketFactory.fallback", "false");
+
         putSafe(props, "mail.smtp.connectiontimeout",
                 ConfigLoader.getProperty(ConfigKeys.MAIL_SMTP_CONN_TIMEOUT), "10000");
         putSafe(props, "mail.smtp.timeout",

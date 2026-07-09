@@ -66,7 +66,7 @@
                                 </a>
                             </div>
                             <div class="avatar-dropdown-footer">
-                                <a href="<%= request.getContextPath() %>/Logout" class="signout-all-btn">
+                                <a href="<%= request.getContextPath() %>/logout" class="signout-all-btn">
                                     <i data-lucide="log-out" style="width: 16px;"></i>
                                     Sign out of all accounts
                                 </a>
@@ -198,7 +198,7 @@
                         </div>
                     </div>
 
-                    <a href="<%= request.getContextPath() %>/Logout" class="card card-animate settings-card">
+                    <a href="<%= request.getContextPath() %>/logout" class="card card-animate settings-card">
                         <div class="settings-icon-wrap red">
                             <i data-lucide="log-out" class="settings-icon"></i>
                         </div>
