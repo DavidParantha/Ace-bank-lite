@@ -71,8 +71,8 @@ public class OtpService {
                             AceBank Security Team""",
                     otp, OTP_VALIDITY_MINUTES);
 
-            MailUtil.sendMail(email, subject, body);
-            log.info("OTP sent successfully to: " + email);
+            MailUtil.sendMailAsync(email, subject, body);
+            log.info("OTP email queued successfully to: " + email);
             return true;
 
         } catch (Exception e) {
