@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 public class MailUtil {
 
     // Default sender address
-    private static final String DEFAULT_SENDER = "support@acebank.com";
+    private static final String DEFAULT_SENDER = "parantha1902@gmail.com";
 
     public static void sendMailAsync(String recipient, String subject, String body) {
         log.info("Scheduling background email (via Brevo HTTP API) to: " + recipient);
@@ -33,8 +33,8 @@ public class MailUtil {
         String senderEmail = ConfigLoader.getProperty(ConfigKeys.MAIL_ADDR);
 
         if (apiKey == null || apiKey.isEmpty()) {
-            // Fallback hardcoded decoded key if env variable not present yet
-            apiKey = "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";
+            log.severe("BREVO_API_KEY environment variable is missing!");
+            return false;
         }
         if (senderEmail == null || senderEmail.isEmpty()) {
             senderEmail = DEFAULT_SENDER;

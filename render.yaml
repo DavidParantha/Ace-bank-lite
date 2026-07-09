@@ -16,20 +16,8 @@ services:
       - key: DB_SCRIPT_PATH
         value: "/sql/schema_initializer.sql"
 
-      # --- Email / SMTP Configuration ---
+      # --- Email / Brevo API Configuration ---
       - key: MAIL_DEFAULT_ADDRESS
-        sync: false   # Set this in Render Dashboard: your Gmail address
-      - key: MAIL_GOOGLE_APP_PASSWORD
-        sync: false   # Set this in Render Dashboard: your Google App Password
-      - key: MAIL_SMTP_HOST
-        value: "smtp.gmail.com"
-      - key: MAIL_SMTP_PORT
-        value: "587"
-      - key: MAIL_SMTP_AUTH
-        value: "true"
-      - key: MAIL_SMTP_STARTTLS_ENABLE
-        value: "true"
-      - key: MAIL_SMTP_CONNECTION_TIMEOUT
-        value: "5000"
-      - key: MAIL_SMTP_TIMEOUT
-        value: "5000"
+        sync: false   # Set this in Render Dashboard: your sender email
+      - key: BREVO_API_KEY
+        sync: false   # Set this in Render Dashboard: your Brevo API key

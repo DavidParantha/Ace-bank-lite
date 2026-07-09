@@ -13,11 +13,7 @@ import lombok.extern.java.Log;
 import java.io.IOException;
 import java.io.Serial;
 
-/**
- * Servlet for changing password from the dashboard.
- * Requires the user to be logged in (session must contain accountNumber).
- * Validates old password, checks new password confirmation, then updates.
- */
+ 
 @Log
 @WebServlet("/change-password")
 public class ChangePasswordServlet extends HttpServlet {
