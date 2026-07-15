@@ -5,21 +5,8 @@ AceBank Lite is a Jakarta Servlet/JSP banking web application packaged as a Mave
 ## Local Run
 
 Use Tomcat 10.1+ or Tomcat 11 with JDK 21.
+ Ace Bank Lite | Banking Management System
 
-```powershell
-.\run-local-tomcat.ps1
-```
-
-Then open:
-
-```text
-http://localhost:8080/
-```
-
-## Demo Login
-
-```text
-Account: 100001
-Email: demo@acebank.com
-Password: Demo@1234
-```
+Developed a banking application supporting account creation, deposits, withdrawals, balance inquiry, and transaction history.
+Implemented secure authentication and efficient database operations for customer account management.
+Applied Object-Oriented Programming principles to create a modular and maintainable system.
